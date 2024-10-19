@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.29)
+project(siaod)
+
+set(CMAKE_CXX_STANDARD 14)
+
+add_executable(5.2 5_2/main.cpp)
+add_executable(6.1 6_1/main.cpp)
+add_executable(6.2 6_2/6_2.cpp)
+add_executable(7.1 7_1/7_1.cpp)
+add_executable(7.2 7_2/7_2.cpp)
+add_executable(8.1_shennon-fano 8_1/8_1_shennon-fano.cpp)
+add_executable(8.1_LZ77 8_1/8_1_LZ77.cpp)
+add_executable(8.1_LZ78 8_1/8_1_LZ78.cpp)
+add_executable(8.1_hoffman 8_1/8_1_hoffamn.cpp)
+add_executable(8.2_smart 8_2/8_2_smart.cpp)
+add_executable(8.2_stupid 8_2/8_2_stupid.cpp)
