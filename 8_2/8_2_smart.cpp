@@ -22,30 +22,30 @@ private:
     int currentRoomId = 0;
 
 public:
-    Castle(int m, int n) : rows(m), cols(n)
+    Castle(const int m, const int n) : rows(m), cols(n)
     {
         walls.resize(rows, std::vector<int>(cols, 0));
         visited.resize(rows, std::vector<bool>(cols, false));
         roomIds.resize(rows, std::vector<int>(cols, -1));
     }
 
-    void setWall(int x, int y, Direction dir)
+    void setWall(const int x, const int y, const Direction dir)
     {
         walls[x][y] |= (1 << dir);
-        int nx = x + dx[dir];
-        int ny = y + dy[dir];
+        const int nx = x + dx[dir];
+        const int ny = y + dy[dir];
         if (nx >= 0 && nx < rows && ny >= 0 && ny < cols)
         {
             walls[nx][ny] |= (1 << ((dir + 2) % 4));
         }
     }
 
-    bool hasWall(int x, int y, Direction dir) const
+    bool hasWall(const int x, const int y, const Direction dir) const
     {
         return walls[x][y] & (1 << dir);
     }
 
-    int countArea(int x, int y)
+    int countArea(const int x, const int y)
     {
         if (x < 0 || x >= rows || y < 0 || y >= cols || visited[x][y])
         {
@@ -58,8 +58,8 @@ public:
 
         for (int dir = 0; dir < 4; ++dir)
         {
-            int nx = x + dx[dir];
-            int ny = y + dy[dir];
+            const int nx = x + dx[dir];
+            const int ny = y + dy[dir];
             if (nx >= 0 && nx < rows && ny >= 0 && ny < cols &&
                 !hasWall(x, y, static_cast<Direction>(dir)))
             {
@@ -106,8 +106,8 @@ public:
             {
                 for (int dir = 0; dir < 4; ++dir)
                 {
-                    int nx = i + dx[dir];
-                    int ny = j + dy[dir];
+                    const int nx = i + dx[dir];
+                    const int ny = j + dy[dir];
 
                     if (nx >= 0 && nx < rows && ny >= 0 && ny < cols &&
                         hasWall(i, j, static_cast<Direction>(dir)))
@@ -118,7 +118,7 @@ public:
                         if (room1 != room2)
                         {
                             // Если комнаты разные
-                            int combinedArea = roomSizes[room1] + roomSizes[room2];
+                            const int combinedArea = roomSizes[room1] + roomSizes[room2];
                             if (combinedArea > maxCombinedArea)
                             {
                                 maxCombinedArea = combinedArea;
@@ -139,7 +139,7 @@ public:
             for (int j = 0; j < cols; ++j)
             {
                 std::cout << "+";
-                if (hasWall(i, j, NORTH))
+                if (hasWall(i, j, NORTH) || i == 0)
                 {
                     std::cout << "---";
                 }
@@ -152,7 +152,7 @@ public:
 
             for (int j = 0; j < cols; ++j)
             {
-                if (hasWall(i, j, WEST))
+                if (hasWall(i, j, WEST) || j == 0)
                 {
                     std::cout << "|";
                 }
@@ -172,9 +172,9 @@ public:
         std::cout << "+" << std::endl;
     }
 
-    static void printRoomInfo(int roomCount, int maxArea,
+    static void printRoomInfo(const int roomCount, const int maxArea,
                               const std::pair<int, int>& wallPosition,
-                              Direction bestDir)
+                              const Direction bestDir)
     {
         std::cout << "Количество комнат: " << roomCount << std::endl;
         std::cout << "Площадь наибольшей комнаты: " << maxArea << std::endl;
@@ -215,9 +215,9 @@ int main()
     int maxCombinedArea;
     std::pair<int, int> wallPosition;
     Direction bestDir;
-    auto start = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::high_resolution_clock::now();
     castle.findBestWallToRemove(maxCombinedArea, wallPosition, bestDir);
-    auto end = std::chrono::high_resolution_clock::now();
+    const auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Время выполнения findBestWallToRemove: "
         << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
         << " наносекунд" << std::endl;

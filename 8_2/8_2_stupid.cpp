@@ -151,7 +151,7 @@ public:
       for (int j = 0; j < cols; ++j)
       {
         std::cout << "+";
-        if (hasWall(i, j, NORTH))
+        if (hasWall(i, j, NORTH) || i == 0)
         {
           std::cout << "---";
         }
@@ -164,7 +164,7 @@ public:
 
       for (int j = 0; j < cols; ++j)
       {
-        if (hasWall(i, j, WEST))
+        if (hasWall(i, j, WEST) || j == 0)
         {
           std::cout << "|";
         }
