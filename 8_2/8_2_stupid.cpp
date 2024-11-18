@@ -1,208 +1,242 @@
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <vector>
 
-enum Direction { NORTH, SOUTH, EAST, WEST };
+enum Direction { NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 };
 
-class Castle {
+class Castle
+{
 private:
   int rows;
   int cols;
-  std::vector<std::vector<int>> walls; // 0 - нет стены, 1 - стена
+  std::vector<std::vector<int>>
+  walls; // 0 - нет стены, битовая маска для сторон
   std::vector<std::vector<bool>> visited;
 
 public:
-  Castle(int m, int n) : rows(m), cols(n) {
+  Castle(int m, int n) : rows(m), cols(n)
+  {
     walls.resize(rows, std::vector<int>(cols, 0)); // Инициализируем стены
     visited.resize(rows,
-                   std::vector<bool>(
-                       cols, false)); // Инициализируем массив посещенных клеток
+                   std::vector<bool>(cols, false)); // Массив посещённых клеток
   }
 
-  void setWall(int x, int y, Direction dir) {
-    if (dir == NORTH) {
-      if (x > 0)
-        walls[x - 1][y] |= (1 << SOUTH);
-    } else if (dir == SOUTH) {
-      if (x < rows - 1)
-        walls[x][y] |= (1 << SOUTH);
-    } else if (dir == EAST) {
-      if (y < cols - 1)
-        walls[x][y] |= (1 << EAST);
-    } else if (dir == WEST) {
-      if (y > 0)
-        walls[x][y] |= (1 << WEST);
+  void setWall(int x, int y, Direction dir)
+  {
+    if (dir == NORTH && x > 0)
+    {
+      walls[x][y] |= (1 << NORTH);
+      walls[x - 1][y] |= (1 << SOUTH);
+    }
+    else if (dir == SOUTH && x < rows - 1)
+    {
+      walls[x][y] |= (1 << SOUTH);
+      walls[x + 1][y] |= (1 << NORTH);
+    }
+    else if (dir == EAST && y < cols - 1)
+    {
+      walls[x][y] |= (1 << EAST);
+      walls[x][y + 1] |= (1 << WEST);
+    }
+    else if (dir == WEST && y > 0)
+    {
+      walls[x][y] |= (1 << WEST);
+      walls[x][y - 1] |= (1 << EAST);
     }
   }
 
-  bool hasWall(int x, int y, Direction dir) {
-    return (walls[x][y] & (1 << dir)) != 0;
-  }
+  bool hasWall(int x, int y, Direction dir) { return walls[x][y] & (1 << dir); }
 
-  int countArea(int x, int y) {
-    // Проверка выхода за границы
-    if (x < 0 || x >= rows || y < 0 || y >= cols || visited[x][y]) {
+  int countArea(int x, int y)
+  {
+    if (x < 0 || x >= rows || y < 0 || y >= cols || visited[x][y])
+    {
       return 0;
     }
 
-    // Проверка наличия стены
-    if (hasWall(x, y, NORTH) && (x == 0 || visited[x - 1][y]))
-      return 0;
-    if (hasWall(x, y, SOUTH) && (x == rows - 1 || visited[x + 1][y]))
-      return 0;
-    if (hasWall(x, y, WEST) && (y == 0 || visited[x][y - 1]))
-      return 0;
-    if (hasWall(x, y, EAST) && (y == cols - 1 || visited[x][y + 1]))
-      return 0;
+    visited[x][y] = true;
+    int area = 1;
 
-    visited[x][y] = true; // Помечаем клетку как посещенную
-    int area = 1;         // Считаем текущую клетку
+    // Проверяем соседей
+    if (!hasWall(x, y, NORTH))
+    {
+      area += countArea(x - 1, y);
+    }
+    if (!hasWall(x, y, SOUTH))
+    {
+      area += countArea(x + 1, y);
+    }
+    if (!hasWall(x, y, EAST))
+    {
+      area += countArea(x, y + 1);
+    }
+    if (!hasWall(x, y, WEST))
+    {
+      area += countArea(x, y - 1);
+    }
 
-    // Обход всех соседей
-    area += countArea(x - 1, y); // Север
-    area += countArea(x + 1, y); // Юг
-    area += countArea(x, y - 1); // Запад
-    area += countArea(x, y + 1); // Восток
-
-    return area; // Возвращаем общую площадь
+    return area;
   }
 
-  void findRooms(int &roomCount, int &maxArea) {
+  void findRooms(int& roomCount, int& maxArea)
+  {
     visited.assign(rows, std::vector<bool>(cols, false));
     roomCount = 0;
     maxArea = 0;
 
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
-        if (!visited[i][j]) {
+    for (int i = 0; i < rows; ++i)
+    {
+      for (int j = 0; j < cols; ++j)
+      {
+        if (!visited[i][j])
+        {
           roomCount++;
-          int area = countArea(i, j);
-          maxArea = std::max(maxArea, area);
+          maxArea = std::max(maxArea, countArea(i, j));
         }
       }
     }
   }
 
-  void bruteForce(int &maxCombinedArea, std::pair<int, int> &bestWallToRemove) {
+  void bruteForce(int& maxCombinedArea, std::pair<int, int>& bestWallToRemove,
+                  Direction& bestDirection)
+  {
     maxCombinedArea = 0;
-    std::pair<int, int> currentWall;
 
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
-        // Проверка стен
-        if (hasWall(i, j, NORTH) && i > 0) {
-          // Удаление стены на севере
-          walls[i][j] ^= (1 << NORTH);
-          walls[i - 1][j] ^= (1 << SOUTH);
+    for (int i = 0; i < rows; ++i)
+    {
+      for (int j = 0; j < cols; ++j)
+      {
+        for (int dir = 0; dir < 4; ++dir)
+        {
+          int nx = i + (dir == SOUTH) - (dir == NORTH);
+          int ny = j + (dir == EAST) - (dir == WEST);
 
-          int roomCount, maxArea;
-          findRooms(roomCount, maxArea);
-          int combinedArea = maxArea; // Площадь объединенной комнаты
+          // Проверяем, можно ли удалить стену
+          if (nx >= 0 && nx < rows && ny >= 0 && ny < cols &&
+            hasWall(i, j, static_cast<Direction>(dir)))
+          {
+            // Удаляем стену
+            walls[i][j] ^= (1 << dir);
+            walls[nx][ny] ^= (1 << ((dir + 2) % 4));
 
-          if (combinedArea > maxCombinedArea) {
-            maxCombinedArea = combinedArea;
-            bestWallToRemove = {i, j}; // Запоминаем стену
+            visited.assign(rows, std::vector<bool>(cols, false));
+            int area1 = countArea(i, j);
+
+            visited.assign(rows, std::vector<bool>(cols, false));
+            int area2 = countArea(nx, ny);
+
+            int combinedArea = area1 + area2;
+
+            if (combinedArea > maxCombinedArea)
+            {
+              maxCombinedArea = combinedArea;
+              bestWallToRemove = {i, j};
+              bestDirection = static_cast<Direction>(dir);
+            }
+
+            // Восстанавливаем стену
+            walls[i][j] ^= (1 << dir);
+            walls[nx][ny] ^= (1 << ((dir + 2) % 4));
           }
-
-          // Возврат стены на место
-          walls[i][j] |= (1 << NORTH);
-          walls[i - 1][j] |= (1 << SOUTH);
-        }
-
-        if (hasWall(i, j, SOUTH) && i < rows - 1) {
-          // Удаление стены на юге
-          walls[i][j] ^= (1 << SOUTH);
-          walls[i + 1][j] ^= (1 << NORTH);
-
-          int roomCount, maxArea;
-          findRooms(roomCount, maxArea);
-          int combinedArea = maxArea;
-
-          if (combinedArea > maxCombinedArea) {
-            maxCombinedArea = combinedArea;
-            bestWallToRemove = {i, j}; // Запоминаем стену
-          }
-
-          // Возврат стены на место
-          walls[i][j] |= (1 << SOUTH);
-          walls[i + 1][j] |= (1 << NORTH);
-        }
-
-        if (hasWall(i, j, WEST) && j > 0) {
-          // Удаление стены на западе
-          walls[i][j] ^= (1 << WEST);
-          walls[i][j - 1] ^= (1 << EAST);
-
-          int roomCount, maxArea;
-          findRooms(roomCount, maxArea);
-          int combinedArea = maxArea;
-
-          if (combinedArea > maxCombinedArea) {
-            maxCombinedArea = combinedArea;
-            bestWallToRemove = {i, j}; // Запоминаем стену
-          }
-
-          // Возврат стены на место
-          walls[i][j] |= (1 << WEST);
-          walls[i][j - 1] |= (1 << EAST);
-        }
-
-        if (hasWall(i, j, EAST) && j < cols - 1) {
-          // Удаление стены на востоке
-          walls[i][j] ^= (1 << EAST);
-          walls[i][j + 1] ^= (1 << WEST);
-
-          int roomCount, maxArea;
-          findRooms(roomCount, maxArea);
-          int combinedArea = maxArea;
-
-          if (combinedArea > maxCombinedArea) {
-            maxCombinedArea = combinedArea;
-            bestWallToRemove = {i, j}; // Запоминаем стену
-          }
-
-          // Возврат стены на место
-          walls[i][j] |= (1 << EAST);
-          walls[i][j + 1] |= (1 << WEST);
         }
       }
     }
+  }
+
+  void printLayout()
+  {
+    for (int i = 0; i < rows; ++i)
+    {
+      for (int j = 0; j < cols; ++j)
+      {
+        std::cout << "+";
+        if (hasWall(i, j, NORTH))
+        {
+          std::cout << "---";
+        }
+        else
+        {
+          std::cout << "   ";
+        }
+      }
+      std::cout << "+" << std::endl;
+
+      for (int j = 0; j < cols; ++j)
+      {
+        if (hasWall(i, j, WEST))
+        {
+          std::cout << "|";
+        }
+        else
+        {
+          std::cout << " ";
+        }
+        std::cout << "   ";
+      }
+      std::cout << "|" << std::endl;
+    }
+
+    for (int j = 0; j < cols; ++j)
+    {
+      std::cout << "+---";
+    }
+    std::cout << "+" << std::endl;
   }
 
   void printRoomInfo(int roomCount, int maxArea,
-                     std::pair<int, int> wallPosition) {
+                     const std::pair<int, int>& wallPosition,
+                     Direction bestDir)
+  {
     std::cout << "Количество комнат: " << roomCount << std::endl;
     std::cout << "Площадь наибольшей комнаты: " << maxArea << std::endl;
     std::cout << "Стену следует удалить из клетки (" << wallPosition.first
-              << ", " << wallPosition.second << ")\n";
+      << ", " << wallPosition.second << ") в направлении " << bestDir
+      << std::endl;
   }
 };
 
-int main() {
+int main()
+{
   Castle castle(5, 5);
 
   // Пример установки стен
+  // Добавление горизонтальных стен
+  castle.setWall(0, 0, EAST);
+  castle.setWall(0, 1, EAST);
   castle.setWall(1, 0, EAST);
   castle.setWall(1, 1, EAST);
   castle.setWall(1, 2, EAST);
-  castle.setWall(1, 3, EAST);
-    castle.setWall(2, 0, SOUTH);
-    castle.setWall(2, 1, SOUTH);
-    castle.setWall(2, 2, SOUTH);
-    castle.setWall(2, 3, SOUTH);
-    castle.setWall(3, 0, SOUTH);
-    castle.setWall(3, 1, SOUTH);
-    castle.setWall(3, 2, SOUTH);
-    castle.setWall(3, 3, SOUTH);
+  castle.setWall(2, 1, EAST);
+  castle.setWall(2, 2, EAST);
+  castle.setWall(2, 3, EAST);
+  castle.setWall(3, 3, EAST);
 
-    int roomCount, maxArea;
-    castle.findRooms(roomCount, maxArea);
+  // Добавление вертикальных стен
+  castle.setWall(0, 0, SOUTH);
+  castle.setWall(0, 1, SOUTH);
+  castle.setWall(1, 1, SOUTH);
+  castle.setWall(1, 2, SOUTH);
+  castle.setWall(2, 2, SOUTH);
+  castle.setWall(2, 3, SOUTH);
+  castle.setWall(3, 3, SOUTH);
+  castle.setWall(3, 4, SOUTH);
 
-    int maxCombinedArea;
-    std::pair<int, int> wallPosition;
-    castle.bruteForce(maxCombinedArea, wallPosition);
+  int roomCount, maxArea;
+  castle.findRooms(roomCount, maxArea);
 
-    castle.printRoomInfo(roomCount, maxArea, wallPosition);
 
-    return 0;
+  int maxCombinedArea;
+  std::pair<int, int> wallPosition;
+  Direction bestDir;
+  auto start = std::chrono::high_resolution_clock::now();
+  castle.bruteForce(maxCombinedArea, wallPosition, bestDir);
+  auto end = std::chrono::high_resolution_clock::now();
+  std::cout << "Время выполнения findBestWallToRemove: " << std::chrono::duration_cast<
+    std::chrono::nanoseconds>(end - start).count() << " наносекунд" << std::endl;
+  castle.printRoomInfo(roomCount, maxArea, wallPosition, bestDir);
+  std::cout << "\nПланировка замка:\n";
+  castle.printLayout();
+
+  return 0;
 }
