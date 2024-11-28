@@ -4,19 +4,23 @@
 #include <unordered_map>
 #include <vector>
 
-struct Symbol {
+struct Symbol
+{
   char character;
   int frequency;
 };
 
-bool compare(const Symbol &a, const Symbol &b) {
+bool compare(const Symbol& a, const Symbol& b)
+{
   return a.frequency > b.frequency;
 }
 
-void shannonFano(const std::vector<Symbol> &symbols,
-                 std::unordered_map<char, std::string> &codes, int start,
-                 int end, const std::string &code) {
-  if (start == end) {
+void shannonFano(const std::vector<Symbol>& symbols,
+                 std::unordered_map<char, std::string>& codes, const int start,
+                 const int end, const std::string& code)
+{
+  if (start == end)
+  {
     codes[symbols[start].character] = code;
     return;
   }
@@ -29,9 +33,11 @@ void shannonFano(const std::vector<Symbol> &symbols,
   int splitIndex = start;
 
   // Найдем индекс, при котором деление будет сбалансированным по весам
-  for (int i = start; i < end; ++i) {
+  for (int i = start; i < end; ++i)
+  {
     leftSum += symbols[i].frequency;
-    if (leftSum >= total / 2) {
+    if (leftSum >= total / 2)
+    {
       splitIndex = i;
       break;
     }
@@ -43,14 +49,17 @@ void shannonFano(const std::vector<Symbol> &symbols,
 
 // Функция восстановления строки
 std::string
-decodeShannonFano(const std::string &encoded,
-                  const std::unordered_map<std::string, char> &reverseCodes) {
+decodeShannonFano(const std::string& encoded,
+                  const std::unordered_map<std::string, char>& reverseCodes)
+{
   std::string decoded;
   std::string currentCode;
 
-  for (char c : encoded) {
+  for (char c : encoded)
+  {
     currentCode += c;
-    if (reverseCodes.find(currentCode) != reverseCodes.end()) {
+    if (reverseCodes.find(currentCode) != reverseCodes.end())
+    {
       decoded += reverseCodes.at(currentCode);
       currentCode = "";
     }
@@ -59,19 +68,22 @@ decodeShannonFano(const std::string &encoded,
   return decoded;
 }
 
-void test(const std::string &input, bool debug = false) {
+void test(const std::string& input, bool debug = false)
+{
   std::cout << "Задана строка: " << input << std::endl;
 
   // Подсчитаем частоты символов
   std::unordered_map<char, int> freq;
-  for (char c : input) {
+  for (char c : input)
+  {
     freq[c]++;
   }
 
   // Создаем вектор символов
   std::vector<Symbol> symbols;
   symbols.reserve(freq.size());
-  for (const auto &entry : freq) {
+  for (const auto& entry : freq)
+  {
     symbols.push_back({entry.first, entry.second});
   }
 
@@ -84,7 +96,8 @@ void test(const std::string &input, bool debug = false) {
 
   // Закодируем строку
   std::string encoded;
-  for (char c : input) {
+  for (char c : input)
+  {
     encoded += codes[c];
   }
 
@@ -99,17 +112,20 @@ void test(const std::string &input, bool debug = false) {
   double compressionRatio = (double)compressedSize / originalSize * 100;
   std::cout << "Коэффициент сжатия: " << compressionRatio << "%" << std::endl;
 
-  if (debug) {
+  if (debug)
+  {
     // Вывод кодов символов
     std::cout << "\nКоды символов:" << std::endl;
-    for (const auto &code : codes) {
+    for (const auto& code : codes)
+    {
       std::cout << "'" << code.first << "' : " << code.second << std::endl;
     }
   }
 
   // Создаем обратный словарь для декодирования
   std::unordered_map<std::string, char> reverseCodes;
-  for (const auto &code : codes) {
+  for (const auto& code : codes)
+  {
     reverseCodes[code.second] = code.first;
   }
 
@@ -118,17 +134,21 @@ void test(const std::string &input, bool debug = false) {
 
   std::cout << "\nВосстановленная строка: " << decoded << std::endl;
 
-    // Проверка корректности восстановления
-    if (input == decoded) {
-        std::cout << "Декодирование успешно." << std::endl;
-    } else {
-        std::cout << "Декодирование не удалось." << std::endl;
-    }
+  // Проверка корректности восстановления
+  if (input == decoded)
+  {
+    std::cout << "Декодирование успешно." << std::endl;
+  }
+  else
+  {
+    std::cout << "Декодирование не удалось." << std::endl;
+  }
 }
 
-int main() {
-    std::string input = "Ана-дэус-рики-паки, Дормы-кормыконсту-таки, Энус-дэус-кана-дэус-БАЦ!";
-    test(input, true);
+int main()
+{
+  std::string input = "Ана-дэус-рики-паки, Дормы-кормыконсту-таки, Энус-дэус-кана-дэус-БАЦ!";
+  test(input, true);
 
-    return 0;
+  return 0;
 }
